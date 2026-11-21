@@ -1,0 +1,2 @@
+UUID=30F2-9311  /boot/efi  vfat    umask=0077      0       1
+UUID=055681f0-609b-412f-88a0-bd1ab6ad4dc4 /  ext4    errors=remount-ro   0   1

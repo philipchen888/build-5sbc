@@ -1,0 +1,7 @@
+# EFI System Partition (ESP)
+part /boot/efi --offset 32768s --source bootimg-efi --sourceparams="loader=grub-efi" --label efi --active --align 1024 --size 512M --use-uuid --uuid=5d0de1a1-4179-40b5-84f4-56d5360f54a8
+
+# Root filesystem
+part / --source rootfs --fstype=ext4 --label root --align 1024 --use-uuid --uuid=5a8def28-1bc4-4d57-b6ee-86b3446bcf4a
+
+bootloader --ptable gpt

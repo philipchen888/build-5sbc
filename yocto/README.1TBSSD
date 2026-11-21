@@ -1,0 +1,34 @@
+Plugin 1TB SSD to PC.
+lsblk -f
+sudo mkdir -p /mnt/yocto-ssd
+sudo mount /dev/sda2 /mnt/yocto-ssd
+df -h /mnt/yocto-ssd
+ls -la /mnt/yocto-ssd
+sudo mkdir -p /mnt/yocto-ssd/yocto-cache/download
+sudo mkdir -p /mnt/yocto-ssd/yocto-cache/sstate-cache
+sudo mkdir -p /mnt/yocto-ssd/yocto-tmp
+sudo chown -R philipchen:philipchen /mnt/yocto-ssd/yocto-cache /mnt/yocto-ssd/yocto-tmp
+cat /etc/fstab
+echo "UUID=f73d9024-2f62-4429-ad46-7696fe627250 /mnt/yocto-ssd ext4 defaults,noatime,nofail 0 2" | sudo tee -a /etc/fstab
+cat /etc/fstab
+sudo systemctl daemon-reload
+sudo mount -a
+findmnt /mnt/yocto-ssd
+sudo mkdir -p /mnt/yocto-ssd/yocto-cache/download
+sudo mkdir -p /mnt/yocto-ssd/yocto-cache/sstate-cache
+sudo mkdir -p /mnt/yocto-ssd/yocto-tmp
+sudo chown -R philipchen:philipchen /mnt/yocto-ssd/yocto-cache /mnt/yocto-ssd/yocto-tmp
+df .
+shopt -s dotglob
+mv ~/download/* /mnt/yocto-ssd/yocto-cache/download/ 2>/dev/null
+mv ~/sstate-cache/* /mnt/yocto-ssd/yocto-cache/sstate-cache/ 2>/dev/null
+shopt -u dotglob
+df .
+vi local-rpi4b.conf ( add
+DL_DIR = "/mnt/yocto-ssd/yocto-cache/download"
+SSTATE_DIR = "/mnt/yocto-ssd/yocto-cache/sstate-cache"
+TMPDIR = "/mnt/yocto-ssd/yocto-tmp/rpi4b"
+)
+
+Before power down PC or When done yocto, sudo umount /mnt/yocto-ssd
+The result is in /mnt/yocto-ssd/yocto-tmp/rpi4b/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic.bz2

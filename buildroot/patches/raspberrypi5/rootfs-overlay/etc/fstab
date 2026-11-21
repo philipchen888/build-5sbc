@@ -1,0 +1,8 @@
+/dev/disk/by-uuid/30F2-9311  /boot/efi  vfat    umask=0077      0       1
+/dev/disk/by-uuid/055681f0-609b-412f-88a0-bd1ab6ad4dc4 /  ext4    errors=remount-ro   0   1
+proc            /proc           proc    defaults        0       0
+devpts          /dev/pts        devpts  defaults,gid=5,mode=620,ptmxmode=0666   0       0
+tmpfs           /dev/shm        tmpfs   mode=1777       0       0
+tmpfs           /tmp            tmpfs   mode=1777       0       0
+tmpfs           /run            tmpfs   mode=0755,nosuid,nodev  0       0
+sysfs           /sys            sysfs   defaults        0       0

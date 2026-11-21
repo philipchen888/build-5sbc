@@ -1,0 +1,132 @@
+Build buildroot image for rpi4b, rpi5, opi5, rockpi4b and rk3328:
+
+cd ~/build-5sbc/buildroot
+wget https://buildroot.org/downloads/buildroot-2026.05.tar.xz
+tar -xJf buildroot-2026.05.tar.xz
+mv buildroot-2026.05 buildroot
+
+For raspberrypi5:
+vi ./buildroot/configs/raspberrypi5_defconfig ( delete KERNEL, RPI_FIRMWARE, TOOLCHAIN_EXTERNAL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add support/scripts/genimage.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, add BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/raspberrypi5/genimage.cfg", append ./patches/rpi5_defconfig)
+cp -r ./patches/raspberrypi5/* ./buildroot/board/raspberrypi5/
+
+For raspberrypi4b:
+vi ./buildroot/configs/raspberrypi4_64_defconfig ( delete KERNEL, RPI_FIRMWARE, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add support/scripts/genimage.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, add BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/raspberrypi4-64/genimage.cfg", append ./patches/rpi4b_defconfig )
+cp -r ./patches/raspberrypi4/* ./buildroot/board/raspberrypi4-64/
+
+For opi5+:
+vi ./buildroot/configs/orangepi_5_plus_defconfig ( delete KERNEL, UBOOT, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y, BR2_GLOBAL_PATCH_DIR, add board/orangepi/orangepi-5-plus/post-image.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, append ./patches/orangepi_5_defconfig)
+cp -r ./patches/orangepi-5/* ./buildroot/board/orangepi/orangepi-5-plus/
+
+For rockpi4b:
+vi ./buildroot/configs/rock4se_defconfig ( delete UBOOT, KERNEL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add board/radxa/rock4se/post-image.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, append ./patches/rockpi4_defconfig)
+cp -r ./patches/rockpi-4/* ./buildroot/board/radxa/rock4se/
+
+For roc-rk3328-cc:
+vi ./buildroot/configs/rock4se_defconfig ( change BR2_cortex_a72_a53=y to BR2_cortex_a53=y, delete UBOOT, KERNEL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add board/radxa/rock4se/post-image.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, append ./patches/rk3328_defconfig)
+cp -r ./patches/roc-rk3328-cc/* ./buildroot/board/radxa/rock4se/
+
+sudo dnf install 'perl(Time::Piece)' 'perl(open)' 'perl(English)' 'perl(ExtUtils::MakeMaker)' 'perl(Thread::Queue)' 'perl(FindBin)' 'perl(IPC::Cmd)' 'perl(Math::BigInt)' 'perl(Math::BigRat)' patch
+
+cd buildroot
+\rm -rf .config output
+make clean
+(rpi4b)                   make raspberrypi4_64_defconfig 
+(rpi5)                    make raspberrypi5_defconfig
+(rockpi4b, roc-rk3328-cc) make rock4se_defconfig
+(opi5+)                   make orangepi_5_plus_defconfig
+make
+
+The result is in ./output/images/sdcard.img
+
+Plugin usb3 stick to PC.   ( rockpi4b use sdcard )
+sudo umount /dev/sda*
+sudo dd if=./output/images/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync
+
+sudo partprobe /dev/sda
+(rpi4b, rpi5) sudo mount /dev/sda1 /mnt
+(rpi4b) sudo 7z x ~/Downloads/RPi4_UEFI_Firmware.zip -o/mnt && sync && sudo umount /mnt
+(rpi5)  sudo 7z x ~/Downloads/RPi5_UEFI_Release.zip -o/mnt && sync && sudo umount /mnt
+
+sudo mount /dev/sda2 /mnt
+sudo vi /mnt/etc/network/interfaces ( delete everything after iface lo inet loopback )
+sudo vi /mnt/etc/vsftpd.conf ( anonymous_enable=NO, local_enable=YES, write_enable=YES )
+sync; sudo umount /mnt;
+Eject sdcard/usb3 stick from PC.
+
+Plugin sdcard to rockpi4b.
+Plugin usb3 stick to rpi4b/rpi5.
+Plugin usb3 stick and ethernet cable to orangepi_5_plus/roc-rk3328-cc.
+
+login:
+username: root
+password: linaro
+
+(rockpi4b, rpi5, rpi4b) wpa_passphrase your_SSID your_passphrase > /etc/ssid.conf
+(rockpi4b, rpi5, rpi4b) wpa_supplicant -B -i wlan0 -c /etc/ssid.conf
+(rockpi4b, rpi5, rpi4b) dhcpcd wlan0
+
+ifconfig
+ssh-keygen -R 192.168.86.211
+ssh root@192.168.86.211
+
+uname -a
+adduser linaro
+
+df .
+date
+aplay -l
+
+-----------------------------------------------------
+For rpi4b, rpi5, rockpi4b, opi5:
+vi /etc/asound.conf ( add
+pcm.!default {
+    type plug
+    slave.pcm {
+        type hw
+        card "vc4hdmi0"
+        device 0
+    }
+}
+
+ctl.!default {
+    type hw
+    card "vc4hdmi0"
+}
+)
+
+alsactl -F restore
+
+Note: rpckpi4b card "hdmisound"
+      opi5     card "hdmi0"
+
+-----------------------------------------------------
+For roc-rk3328-cc:
+vi /etc/asound.conf ( add
+pcm.!default {
+    type pulse
+}
+
+ctl.!default {
+    type pulse
+}
+)
+mkdir -p /home/linaro/pulse-runtime
+export PULSE_RUNTIME_PATH=/home/linaro/pulse-runtime
+pulseaudio --start
+pactl list short sinks
+pactl set-sink-volume 0 25%
+
+------------------------------------------------------
+
+(roc-rk3328-cc) pulseaudio --start
+(roc-rk3328-cc) pactl set-sink-volume 0 25%
+aplay /home/linaro/yoursong.wav
+mpv /home/linaro/yoursong.mp3
+mpv --vo=drm /home/linaro/yourvideo.mp4
+(roc-rk3328-cc) mpv --vo=drm --vf=scale=640:480 --video-unscaled=yes /home/linaro/yourvideo.mp4
+
+For rockpi4b:
+bluetoothctl list
+hciconfig hci0
+hciconfig -a
+hcitool dev

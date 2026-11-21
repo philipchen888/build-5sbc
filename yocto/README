@@ -1,0 +1,227 @@
+Build yocto image for rpi4b, rpi5, opi5, rockpi4b and rk3328:
+
+   Note: yocto for 5 sbc need at least 200GB disk. If not enough disk space you can use usb3 1TB ssd. See README.1TBSSD.
+
+   (rpi4b)     Input files: ../kernel/linux-rpi4b/arch/arm64/boot/Image
+                            ../kernel/linux-rpi4b/arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb
+                            ../kernel/linux-rpi4b/tmp/lib/modules/*
+   (rpi5)      Input files: ../kernel/linux-rpi5/arch/arm64/boot/Image
+                            ../kernel/linux-rpi5/arch/arm64/boot/dts/broadcom/bcm2712-rpi-5-b.dtb
+                            ../kernel/linux-rpi5/tmp/lib/modules/*
+   (roc-rk3328-cc) Input files: ../kernel/linux-rk3328/arch/arm64/boot/Image
+                                ../kernel/linux-rk3328/tmp/lib/modules/*
+
+   mkdir ${HOME}/download
+   mkdir ${HOME}/sstate-cache
+   mkdir mypoky; cd mypoky;
+   git clone https://github.com/openembedded/bitbake.git -b master
+   rm -rf ~/bitbake-builds
+   python3 bitbake/bin/bitbake-setup settings set default top-dir $PWD && python3 bitbake/bin/bitbake-setup settings set default top-dir-prefix $PWD && python3 bitbake/bin/bitbake-setup settings set default top-dir-name build && python3 bitbake/bin/bitbake-setup settings set default setup-dir $PWD
+
+   rm -rf build config layers
+
+   (roc-rk3328-cc)
+   python3 bitbake/bin/bitbake-setup init --setup-dir-name $PWD --non-interactive ../patches/roc-rk3328-cc.conf.json roc-rk3328-cc
+   cp ../patches/local-rk3328.conf ./build/conf/local.conf
+   cp ../patches/rockchip.wks ./layers/meta-rockchip/files/wic/rockchip.wks
+
+   (rockpi4b)
+   python3 bitbake/bin/bitbake-setup init --setup-dir-name $PWD --non-interactive ../patches/rockpi4b.conf.json rockpi4b
+   cp ../patches/local-rockpi4b.conf ./build/conf/local.conf
+   cp ../patches/rockchip.wks ./layers/meta-rockchip/files/wic/rockchip.wks
+ 
+   (opi5+)
+   python3 bitbake/bin/bitbake-setup init --setup-dir-name $PWD --non-interactive ../patches/orangepi5plus.conf.json orangepi5plus
+   cp ../patches/local-opi5.conf ./build/conf/local.conf
+   cp ../patches/rockchip.wks ./layers/meta-rockchip/files/wic/rockchip.wks
+
+   cp ../patches/hdmi-audio.cfg ./layers/meta-rockchip/recipes-kernel/linux/linux-rockchip
+   cp ../patches/usb3-boot.cfg ./layers/meta-rockchip/recipes-kernel/linux/linux-rockchip
+   vi ./layers/meta-rockchip/recipes-kernel/linux/linux-yocto_%.bbappend ( append
+   SRC_URI:append:rockchip = " file://hdmi-audio.cfg file://usb3-boot.cfg"
+   )
+
+--------------------------------------------------------------------
+
+   (rpi4b)
+   python3 bitbake/bin/bitbake-setup init --setup-dir-name $PWD --non-interactive ../patches/raspberrypi4b.conf.json raspberrypi4b
+   cp ../patches/local-rpi4b.conf ./build/conf/local.conf
+   cp ../patches/rockchip.wks ./layers/meta-raspberrypi/files/wic/sdimage-raspberrypi.wks
+
+   (rpi5)
+   python3 bitbake/bin/bitbake-setup init --setup-dir-name $PWD --non-interactive ../patches/raspberrypi5.conf.json raspberrypi5
+   cp ../patches/local-rpi5.conf ./build/conf/local.conf
+   cp ../patches/rockchip.wks ./layers/meta-raspberrypi/files/wic/sdimage-raspberrypi.wks
+
+   . ./build/init-build-env
+
+   Note: linux-yocto change to linux-raspberrypi for rpi4b and rpi5
+
+   bitbake -s
+   bitbake -c cleansstate u-boot linux-yocto core-image-weston clang
+   bitbake -k u-boot
+   bitbake -k clang llvm-native clang-native rust-native
+   bitbake -k linux-yocto
+   bitbake -k core-image-weston
+
+   Note: If using usb3 1TB ssd, when done yocto, sudo umount /mnt/yocto-ssd 
+         The result is in /mnt/yocto-ssd/yocto-tmp/rpi4b/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic.bz2
+
+   (roc-rk3328-cc)
+   The result is in ./tmp/deploy/images/roc-rk3328-cc/core-image-weston-roc-rk3328-cc.rootfs.wic
+   Plugin usb3 stick to PC.
+   sudo umount /dev/sda*
+   sudo dd if=./tmp/deploy/images/roc-rk3328-cc/core-image-weston-roc-rk3328-cc.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+
+   (rockpi4b)
+   The result is in ./tmp/deploy/images/rock-pi-4b/core-image-weston-rock-pi-4b.rootfs.wic
+   Plugin sdcard to PC.
+   sudo umount /dev/sda*
+   sudo dd if=./tmp/deploy/images/rock-pi-4b/core-image-weston-rock-pi-4b.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+
+   (opi5+)
+   The result is in ./tmp/deploy/images/orangepi-5-plus/core-image-weston-orangepi-5-plus.rootfs.wic
+   Plugin usb3 stick to PC.
+   sudo umount /dev/sda*
+   sudo dd if=./tmp/deploy/images/orangepi-5-plus/core-image-weston-orangepi-5-plus.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+
+   (rpi4b)
+   The result is in ./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic.bz2
+   bzip2 -d -f ./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic.bz2
+   Plugin sdcard to PC.
+   sudo umount /dev/sda*
+   sudo dd if=./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+
+   (rpi5)
+   The result is in ./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic.bz2
+   bzip2 -d -f ./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic.bz2
+   Plugin sdcard to PC.
+   sudo umount /dev/sda*
+   sudo dd if=./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+
+   sudo partprobe /dev/sda
+   sudo mount /dev/sda1 /mnt
+   sudo cp ../../patches/grub.cfg /mnt/EFI/BOOT/grub.cfg
+   (roc-rk3328-cc) sudo cp ../../../kernel/linux-rk3328/arch/arm64/boot/Image /mnt
+   (rpi4b) sudo 7z x ~/Downloads/RPi4_UEFI_Firmware.zip -o/mnt
+   (rpi4b) sudo cp ../../../kernel/linux-rpi4b/arch/arm64/boot/Image /mnt
+   (rpi4b) sudo cp ../../../kernel/linux-rpi4b/arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb /mnt
+   (rpi5)  sudo 7z x ~/Downloads/RPi5_UEFI_Release.zip -o/mnt
+   (rpi5)  sudo cp ../../../kernel/linux-rpi5/arch/arm64/boot/Image /mnt
+   (rpi5)  sudo cp ../../../kernel/linux-rpi5/arch/arm64/boot/dts/broadcom/bcm2712-rpi-5-b.dtb /mnt
+   sync; sudo umount /mnt;
+
+   sudo mount /dev/sda2 /mnt
+   (roc-rk3328-cc) sudo cp -r ../../../kernel/linux-rk3328/tmp/lib/modules/* /mnt/lib/modules
+   (rpi4b)         sudo cp -r ../../../kernel/linux-rpi4b/tmp/lib/modules/* /mnt/lib/modules
+   (rpi5)          sudo cp -r ../../../kernel/linux-rpi5/tmp/lib/modules/* /mnt/lib/modules
+   sudo vi /mnt/etc/xdg/weston/weston.ini ( delete everything, add
+   [core]
+   xwayland=true
+   idle-time=0
+
+   [libinput]
+   enable_tap=true
+
+   [shell]
+   locking=false
+   cursor-theme=Adwaita
+   cursor-size=16
+   )
+   sync; sudo umount /mnt;
+   Eject usb3 stick/sdcard from PC.
+
+   \rm -rf ./tmp/work
+
+Plugin usb3 stick and ethernet cable to orangepi 5 plus/roc-rk3328-cc.
+Plugin sdcard and ethernet cable to rockpi4b, rpi4b, rpi5.
+(rpi4b) Esc -> Device Manager -> Rpi -> Advanced -> 3GB ( disable ) -> System Table (Devicetree) -> F10 -> Boot Manager -> first UEFI or SDCARD.
+(rpi5)  Esc -> Rpi -> ACPI/ Device Tree -> System Table (Devicetree) -> F10 -> Boot Manager -> first UEFI or SDCARD.
+uname -a
+su -
+passwd
+adduser linaro
+usermod -aG adm,sudo,video linaro
+sync
+reboot
+
+(rpi4b, rpi5) nmcli dev wifi connect "SSID" password "PASSWORD"
+ifconfig
+
+ssh-keygen -R 192.168.86.250
+ssh root@192.168.86.250
+
+uname -a
+\rm /etc/localtime
+ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+date
+
+df .
+lsblk
+fdisk -l /dev/sda  ( For rockpi4b: mmcblk1, for rpi4b/rpi5: mmcblk0 )
+echo ", +" | sfdisk -N 2 --no-reread /dev/sda ( For rockpi4b: mmcblk1, for rpi4b/rpi5 mmcblk0 )
+fdisk -l /dev/sda  ( For rockpi4b: mmcblk1, for rpi4b/rpi5: mmcblk0 )
+reboot
+
+date
+resize2fs /dev/sda2  ( For rockpi4b: mmcblk1p2, for rpi4b/rpi5: mmcblk0p2 )
+df .
+aplay -l
+
+--------------------------------------------------------------------------
+For roc-rk3328-cc:
+vi /etc/asound.conf ( add
+pcm.softvol_card0 {
+    type softvol
+    slave.pcm "plughw:0,0"
+    control {
+        name "SoftMaster"
+        card 0
+    }
+}
+)
+
+In weston desktop:
+su -
+whoami
+glmark2-es2-wayland
+
+amixer -c 0 sset 'SoftMaster' 20%
+aplay -D softvol_card0 /home/linaro/yoursong.wav
+mpv --audio-device=alsa/softvol_card0 /home/linaro/yoursong.mp3
+XDG_RUNTIME_DIR=/run/user/$(id -u weston) WAYLAND_DISPLAY=wayland-1 mpv -fs --audio-device=alsa/softvol_card0 /home/linaro/yourvideo.mp4
+
+--------------------------------------------------------------------------
+
+For rockpi4b, opi5+, rpi4b, rpi5:
+vi /etc/asound.conf ( add
+pcm.!default {
+    type plug
+    slave.pcm {
+        type hw
+        card "hdmisound"
+        device 0
+    }
+}
+
+ctl.!default {
+    type hw
+    card "hdmisound"
+}
+)
+
+alsactl -F restore
+
+Note: rpckpi4b      card "hdmisound"
+      opi5          card "hdmi0"
+      rpi4b/rpi5    card "vc4hdmi0"
+
+In weston desktop:
+su -
+whoami
+glmark2-es2-wayland
+
+aplay /home/linaro/yoursong.wav
+mpv /home/linaro/yoursong.mp3
+mpv -fs /home/linaro/yourvideo.mp4
+(rpi4b, rpi5) mpv --vo=wlshm -fs /home/linaro/yourvideo.mp4

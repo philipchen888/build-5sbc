@@ -1,0 +1,70 @@
+#!/bin/sh
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/lib/udev
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+if (exec 0</dev/console) 2>/dev/null; then
+    exec 0</dev/console
+    exec 1>/dev/console
+    exec 2>/dev/console
+fi
+
+# Load storage + ext4 drivers via Buildroot's udev & modules scripts
+/etc/init.d/S10udevd start 2>/dev/null
+/etc/init.d/S11modules start 2>/dev/null
+
+# Parse root= parameter from kernel command line
+ROOT_PARAM=$(sed -n 's/.*root=\([^ ]*\).*/\1/p' /proc/cmdline)
+mkdir -p /newroot
+
+echo "Waiting for root device: $ROOT_PARAM"
+COUNT=0
+while [ $COUNT -lt 30 ]; do
+    DEV=""
+    case "$ROOT_PARAM" in
+        PARTUUID=*)
+            PUUID="${ROOT_PARAM#PARTUUID=}"
+            if [ -b "/dev/disk/by-partuuid/$PUUID" ]; then
+                DEV="/dev/disk/by-partuuid/$PUUID"
+            else
+                DEV=$(blkid | grep -i "$PUUID" | cut -d: -f1 | head -n1)
+            fi
+            ;;
+        UUID=*)
+            UUID_VAL="${ROOT_PARAM#UUID=}"
+            if [ -b "/dev/disk/by-uuid/$UUID_VAL" ]; then
+                DEV="/dev/disk/by-uuid/$UUID_VAL"
+            else
+                DEV=$(blkid | grep -i "$UUID_VAL" | cut -d: -f1 | head -n1)
+            fi
+            ;;
+        /dev/*)
+            [ -b "$ROOT_PARAM" ] && DEV="$ROOT_PARAM"
+            ;;
+    esac
+
+    if [ -n "$DEV" ] && mount -t ext4 -o rw "$DEV" /newroot; then
+        echo "Mounted $DEV on /newroot"
+        break
+    fi
+    sleep 0.5
+    COUNT=$((COUNT + 1))
+done
+
+if ! mountpoint -q /newroot; then
+    echo "ERROR: Failed to mount $ROOT_PARAM. Available devices:"
+    ls -la /dev/sd* /dev/nvme* /dev/disk/by-partuuid/ 2>/dev/null
+    blkid
+    exec /bin/sh
+fi
+
+# Stop udevd cleanly, move mounts, and switch to /dev/sda2
+/etc/init.d/S10udevd stop 2>/dev/null
+mount --move /dev /newroot/dev
+mount --move /proc /newroot/proc
+mount --move /sys /newroot/sys
+
+exec switch_root /newroot /sbin/init

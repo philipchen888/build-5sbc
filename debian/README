@@ -1,0 +1,68 @@
+Build debian bookworm, trixie, forky images for rpi4b, rpi5, opi5, rockpi4b and rk3328:
+
+cd ~/build-5sbc/debian
+make clean
+make SUITE=bookworm rootfs_base
+make SUITE=bookworm CHIP=rockpi4b finalize
+DISTRIBUTION=bookworm CHIP=rockpi4b ./mk-espimage.sh 
+./mk-image.sh
+
+Plugin NVMe SSD/usb3 stick to PC.
+sudo ./mksdcardimg.sh
+
+Plugin NVMe SSD/usb3 stick to sbc. For rk3328 put sdcard with uboot-uefi image to rk3328.
+Plugin ethernet cable to opi5 and rk3328.
+(rpi4b) Esc -> Device Manager -> Rpi -> Advanced -> 3GB ( disable ) -> F10 -> Boot Manager -> first UEFI or SDCARD.
+Login:
+Username: linaro
+Password: linaro
+Setup wifi. Disable power saving, auto suspend and screen saver.
+sudo apt update
+sudo apt install net-tools openssh-server pulseaudio-utils
+sudo ifconfig
+ssh-keygen -R 192.168.86.28
+ssh linaro@192.168.86.28
+df .
+sudo resize2fs /dev/sda2  ( for NVMe SSD /dev/nvme0n1p2 )
+df .
+uname -a
+lsb_release -a
+sudo dpkg-reconfigure tzdata
+sudo dpkg-reconfigure locales
+date
+sudo apt update
+sudo apt upgrade
+sync
+free
+
+sudo apt install python3-pip python3-setuptools ffmpeg mpv glmark2-es2-wayland pandoc firefox-esr vlc vlc-plugin-video-output vsftpd
+
+(bookworm, trixie) sudo apt install speedtest-cli
+(bookworm, trixie) speedtest-cli --secure
+
+glmark2-es2-wayland
+
+aplay -l
+pavucontrol  ( select hdmi as default )
+
+firefox -> youtube.com -> search YmDNhi07_Ho
+
+Do follows on PC, then ftp swan.mp4 to sbc.
+(
+git clone https://github.com/yt-dlp/yt-dlp.git
+cd yt-dlp
+make
+cd ../
+(rk3328) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4 --postprocessor-args " -r 10 -b:v 2M -c:a copy"
+(opi5,rpi5,rockpi4b,rpi4b) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4
+)
+
+mpv swan.mp4
+ffplay -autoexit swan.mp4
+cvlc -gl=wgl --glconv=any swan.mp4
+
+Except rockpi4b, Plugin ASUS USB-BT500 bluetooth usb dongle to sbc.
+hciconfig hci0
+hcitool dev
+hciconfig -a
+

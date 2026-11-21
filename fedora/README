@@ -1,0 +1,54 @@
+Build fedora image for rpi4b, rpi5, opi5, rockpi4b and rk3328:
+
+cd ~/build-5sbc/fedora
+
+make setup_host
+make clean
+make CHIP=rpi4b build_image
+The result is in ./build/fedora4sbc.raw.raw
+
+CHIP=rpi4b ./mk-espimage.sh
+The result is in ./fedora-esp.img
+
+Plugin NVMe SSD to PC.  ( rpi4b, rpi5 and roc-rk3328-cc use usb3 stick )
+sudo CHIP=rpi4b ./mksdcardimg.sh
+
+Plugin NVMe SSD to sbc.  ( rpi4b, rpi5 and roc-rk3328-cc use usb3 stick )
+Setup wifi host username userpasswd locales
+Disable power saving, auto suspend and screen saver.
+sudo dnf install net-tools openssh-server pulseaudio-utils
+sudo systemctl start sshd.service
+sudo systemctl enable sshd.service
+
+ssh-keygen -R 192.168.86.22
+ssh linaro@192.168.86.22
+df .
+uname -a
+sudo dnf update
+
+speedtest-cli
+glmark2-es2-wayland
+aplay -l
+pavucontrol  ( select hdmi as default sound )
+
+firefox -> youtube.com -> search YmDNhi07_Ho
+
+sudo systemctl start vsftpd
+sudo systemctl enable vsftpd
+
+Do follows on PC, then ftp swan.mp4 to sbc.
+(
+git clone https://github.com/yt-dlp/yt-dlp.git
+cd yt-dlp
+make
+cd ../
+~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4
+)
+
+mpv swan.mp4
+ffplay -autoexit swan.mp4
+cvlc swan.mp4
+
+Except rockpi4b, plugin ASUS BT500 bluetooth usb dongle to sbc.
+sudo rfkill list
+bluetoothctl -> scan on -> scan off -> exit

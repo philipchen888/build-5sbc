@@ -1,0 +1,46 @@
+compile mainline kernel for orangepi5 plus:
+
+git clone --depth=1 --branch v6.19 https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+mv linux linux-opi5
+
+vi ./linux-opi5/arch/arm64/configs/defconfig ( enable NVMe change to:
+CONFIG_PHY_ROCKCHIP_PCIE=y
+CONFIG_BLK_DEV_NVME=y
+CONFIG_PCIE_ROCKCHIP_HOST=y
+CONFIG_VIDEO_ROCKCHIP_RGA=y
+CONFIG_MEDIA_SUPPORT=y
+CONFIG_SPI_SPIDEV=y
+CONFIG_DRM_ROCKCHIP=y
+CONFIG_ROCKCHIP_SARADC=y
+CONFIG_PHY_ROCKCHIP_INNO_HDMI=y
+)
+
+vi ./linux-opi5/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi ( change compatible = "rockchip,rk3588-mali", "arm,mali-valhall-csf"; to compatible = "arm,mali-valhall-csf", "arm,mali-g610"; )
+vi linux-opi5/arch/arm64/boot/dts/rockchip/rk3588-orangepi-5.dtsi ( change to:
+&i2c2 {
+        status = "okay";
+};
+
+&uart3 {
+        status = "okay";
+};
+
+&spi0 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&spi0m2_cs0 &spi0m2_cs1 &spi0m2_pins>;
+        status = "okay";
+        spidev@0 {
+                compatible = "cisco,spi-petra";
+                reg = <0>;
+                spi-max-frequency = <10000000>;
+        };
+};
+
+&pwm14 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pwm14m2_pins>;
+        status = "okay";
+};
+)
+
+make -f Makefile.opi5 kernel
