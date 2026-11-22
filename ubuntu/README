@@ -1,5 +1,8 @@
 Build ubuntu noble, qesting, resolute images for rpi4b, rpi5, opi5, rockpi4b and rk3328:
 
+Input files: ../kernel/linux-${CHIP}/tmp/boot/*
+             ../kernel/linux-${CHIP}/tmp/lib/modules/*
+
 cd ~/build-5sbc/ubuntu
 sudo ln -s gutsy /usr/share/debootstrap/scripts/resolute
 sudo ln -s gutsy /usr/share/debootstrap/scripts/questing

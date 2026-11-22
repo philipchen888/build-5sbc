@@ -1,31 +1,38 @@
 Build buildroot image for rpi4b, rpi5, opi5, rockpi4b and rk3328:
 
+sudo dnf install 'perl(Time::Piece)' 'perl(open)' 'perl(English)' 'perl(ExtUtils::MakeMaker)' 'perl(Thread::Queue)' 'perl(FindBin)' 'perl(IPC::Cmd)' 'perl(Math::BigInt)' 'perl(Math::BigRat)' patch
+
+Input files: ../kernel/linux-rpi4b/arch/arm64/boot/Image
+             ../kernel/linux-rpi4b/arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb
+             ../kernel/linux-rpi4b/tmp/lib/modules/*
+             ../kernel/linux-rpi5/arch/arm64/boot/Image
+             ../kernel/linux-rpi5/arch/arm64/boot/dts/broadcom/bcm2712-rpi-5-b.dtb
+             ../kernel/linux-rpi5/tmp/lib/modules/*
+
 cd ~/build-5sbc/buildroot
 wget https://buildroot.org/downloads/buildroot-2026.05.tar.xz
 tar -xJf buildroot-2026.05.tar.xz
 mv buildroot-2026.05 buildroot
 
 For raspberrypi5:
-vi ./buildroot/configs/raspberrypi5_defconfig ( delete KERNEL, RPI_FIRMWARE, TOOLCHAIN_EXTERNAL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add support/scripts/genimage.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, add BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/raspberrypi5/genimage.cfg", append ./patches/rpi5_defconfig)
+vi ./buildroot/configs/raspberrypi5_defconfig ( delete KERNEL, RPI_FIRMWARE, TOOLCHAIN_EXTERNAL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add BR2_ROOTFS_POST_IMAGE_SCRIPT="support/scripts/genimage.sh", add BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/raspberrypi5/genimage.cfg", append ./patches/rpi5_defconfig)
 cp -r ./patches/raspberrypi5/* ./buildroot/board/raspberrypi5/
 
 For raspberrypi4b:
-vi ./buildroot/configs/raspberrypi4_64_defconfig ( delete KERNEL, RPI_FIRMWARE, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add support/scripts/genimage.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, add BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/raspberrypi4-64/genimage.cfg", append ./patches/rpi4b_defconfig )
+vi ./buildroot/configs/raspberrypi4_64_defconfig ( delete KERNEL, RPI_FIRMWARE, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add BR2_ROOTFS_POST_IMAGE_SCRIPT="support/scripts/genimage.sh", add BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/raspberrypi4-64/genimage.cfg", append ./patches/rpi4b_defconfig )
 cp -r ./patches/raspberrypi4/* ./buildroot/board/raspberrypi4-64/
 
 For opi5+:
-vi ./buildroot/configs/orangepi_5_plus_defconfig ( delete KERNEL, UBOOT, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y, BR2_GLOBAL_PATCH_DIR, add board/orangepi/orangepi-5-plus/post-image.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, append ./patches/orangepi_5_defconfig)
+vi ./buildroot/configs/orangepi_5_plus_defconfig ( delete KERNEL, UBOOT, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y, BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV=y, BR2_GLOBAL_PATCH_DIR, append ./patches/orangepi_5_defconfig)
 cp -r ./patches/orangepi-5/* ./buildroot/board/orangepi/orangepi-5-plus/
 
 For rockpi4b:
-vi ./buildroot/configs/rock4se_defconfig ( delete UBOOT, KERNEL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add board/radxa/rock4se/post-image.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, append ./patches/rockpi4_defconfig)
+vi ./buildroot/configs/rock4se_defconfig ( delete UBOOT, KERNEL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, append ./patches/rockpi4_defconfig)
 cp -r ./patches/rockpi-4/* ./buildroot/board/radxa/rock4se/
 
 For roc-rk3328-cc:
-vi ./buildroot/configs/rock4se_defconfig ( change BR2_cortex_a72_a53=y to BR2_cortex_a53=y, delete UBOOT, KERNEL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, add board/radxa/rock4se/post-image.sh to BR2_ROOTFS_POST_IMAGE_SCRIPT, append ./patches/rk3328_defconfig)
+vi ./buildroot/configs/rock4se_defconfig ( change BR2_cortex_a72_a53=y to BR2_cortex_a53=y, delete UBOOT, KERNEL, BR2_DOWNLOAD_FORCE_CHECK_HASHES=y, BR2_GLOBAL_PATCH_DIR, append ./patches/rk3328_defconfig)
 cp -r ./patches/roc-rk3328-cc/* ./buildroot/board/radxa/rock4se/
-
-sudo dnf install 'perl(Time::Piece)' 'perl(open)' 'perl(English)' 'perl(ExtUtils::MakeMaker)' 'perl(Thread::Queue)' 'perl(FindBin)' 'perl(IPC::Cmd)' 'perl(Math::BigInt)' 'perl(Math::BigRat)' patch
 
 cd buildroot
 \rm -rf .config output
@@ -40,12 +47,14 @@ The result is in ./output/images/sdcard.img
 
 Plugin usb3 stick to PC.   ( rockpi4b use sdcard )
 sudo umount /dev/sda*
-sudo dd if=./output/images/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync
+sudo dd if=./output/images/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
 
 sudo partprobe /dev/sda
 (rpi4b, rpi5) sudo mount /dev/sda1 /mnt
 (rpi4b) sudo 7z x ~/Downloads/RPi4_UEFI_Firmware.zip -o/mnt && sync && sudo umount /mnt
+Note: Don't overwrite dtb.
 (rpi5)  sudo 7z x ~/Downloads/RPi5_UEFI_Release.zip -o/mnt && sync && sudo umount /mnt
+Note: Don't overwrite dtb.
 
 sudo mount /dev/sda2 /mnt
 sudo vi /mnt/etc/network/interfaces ( delete everything after iface lo inet loopback )
@@ -56,6 +65,8 @@ Eject sdcard/usb3 stick from PC.
 Plugin sdcard to rockpi4b.
 Plugin usb3 stick to rpi4b/rpi5.
 Plugin usb3 stick and ethernet cable to orangepi_5_plus/roc-rk3328-cc.
+(rpi4b) Esc -> Device Manager -> Rpi -> Advanced -> 3GB ( disable ) -> System Table (Devicetree) -> F10 -> Boot Manager -> first UEFI or SDCARD.
+(rpi5)  Esc -> Rpi -> ACPI/ Device Tree -> System Table (Devicetree) -> F10 -> Boot Manager -> first UEFI or SDCARD.
 
 login:
 username: root
@@ -123,7 +134,7 @@ pactl set-sink-volume 0 25%
 aplay /home/linaro/yoursong.wav
 mpv /home/linaro/yoursong.mp3
 mpv --vo=drm /home/linaro/yourvideo.mp4
-(roc-rk3328-cc) mpv --vo=drm --vf=scale=640:480 --video-unscaled=yes /home/linaro/yourvideo.mp4
+(roc-rk3328-cc) mpv --vo=drm --vf=scale=800:480 --video-unscaled=yes /home/linaro/yourvideo.mp4
 
 For rockpi4b:
 bluetoothctl list

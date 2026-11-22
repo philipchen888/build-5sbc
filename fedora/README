@@ -1,5 +1,8 @@
 Build fedora image for rpi4b, rpi5, opi5, rockpi4b and rk3328:
 
+Input files: ../kernel/linux-${CHIP}/tmp/boot/*
+             ../kernel/linux-${CHIP}/tmp/lib/modules/*
+
 cd ~/build-5sbc/fedora
 
 make setup_host

@@ -71,33 +71,33 @@ Build yocto image for rpi4b, rpi5, opi5, rockpi4b and rk3328:
    The result is in ./tmp/deploy/images/roc-rk3328-cc/core-image-weston-roc-rk3328-cc.rootfs.wic
    Plugin usb3 stick to PC.
    sudo umount /dev/sda*
-   sudo dd if=./tmp/deploy/images/roc-rk3328-cc/core-image-weston-roc-rk3328-cc.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+   sudo dd if=./tmp/deploy/images/roc-rk3328-cc/core-image-weston-roc-rk3328-cc.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
 
    (rockpi4b)
    The result is in ./tmp/deploy/images/rock-pi-4b/core-image-weston-rock-pi-4b.rootfs.wic
    Plugin sdcard to PC.
    sudo umount /dev/sda*
-   sudo dd if=./tmp/deploy/images/rock-pi-4b/core-image-weston-rock-pi-4b.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+   sudo dd if=./tmp/deploy/images/rock-pi-4b/core-image-weston-rock-pi-4b.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
 
    (opi5+)
    The result is in ./tmp/deploy/images/orangepi-5-plus/core-image-weston-orangepi-5-plus.rootfs.wic
    Plugin usb3 stick to PC.
    sudo umount /dev/sda*
-   sudo dd if=./tmp/deploy/images/orangepi-5-plus/core-image-weston-orangepi-5-plus.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+   sudo dd if=./tmp/deploy/images/orangepi-5-plus/core-image-weston-orangepi-5-plus.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
 
    (rpi4b)
    The result is in ./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic.bz2
    bzip2 -d -f ./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic.bz2
    Plugin sdcard to PC.
    sudo umount /dev/sda*
-   sudo dd if=./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+   sudo dd if=./tmp/deploy/images/raspberrypi4-64/core-image-weston-raspberrypi4-64.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
 
    (rpi5)
    The result is in ./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic.bz2
    bzip2 -d -f ./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic.bz2
    Plugin sdcard to PC.
    sudo umount /dev/sda*
-   sudo dd if=./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync
+   sudo dd if=./tmp/deploy/images/raspberrypi5/core-image-weston-raspberrypi5.rootfs.wic of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
 
    sudo partprobe /dev/sda
    sudo mount /dev/sda1 /mnt
