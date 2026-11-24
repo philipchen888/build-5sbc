@@ -1,0 +1,54 @@
+Build android NVMe SSD for orangepi 5 plus.
+
+1. Download Android image:
+   Download prebuilt image from http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-5-plus-32GB.html  ( android 12 )
+   cd ~/build-5sbc/android
+   mv ~/Downloads/Android*zip .
+   for file in *.zip; do 7z x "$file"; done
+   tar -xzf Android/'Android 12'/'SPIFlash-NVME SSD Image'/OrangePi5Plus_RK3588_Android12_spi-nvme_v1.0.2.tar.gz
+
+2. Install adb, rkdeveloptool and upgrade_tool:
+   On PC install adb rkdeveloptool ( sudo dnf install adb rkdeveloptool )
+   See https://github.com/industrialtablet/RK3588-Development-Board/blob/main/RK3588_Update_Firmware.md
+   Download Linux_Upgrade_Tool
+   git clone https://github.com/vicharak-in/Linux_Upgrade_Tool
+
+3. Flash Android image to on board spi and NVMe SSD:
+   Put NVMe SSD on orangepi 5 plus.
+   Put orangepi 5 plus into maskrom mode.  ( see users manual for how to put orangepi 5 plus into maskrom mode )
+   Make sure the Orange Pi 5 Plus is completely powered down. Remove any MicroSD cards. Remove USB cable.
+   On orangepi5+ Press and hold the MASKROM button, Connect the Orange Pi 5 Plus to your Fedora host PC using a high-quality USB Type-C data cable (plugged into the board's Type-C port).
+   Plug in USB power and release the MASKROM button.
+
+   sudo ./Linux_Upgrade_Tool/upgrade_tool ld    ( list devices )
+   sudo ./Linux_Upgrade_Tool/upgrade_tool uf OrangePi5Plus_RK3588_Android12_spi-nvme_v1.0.2.img ( UpgradeFirmware )
+   Power off orangepi 5 plus.
+
+4. Power on orangepi 5 plus, boot android on NVMe SSD:
+   Setup android, sign in play store. Install youtube, shutdown app.
+   Turn on developer mode: 
+   Settings -> About tablet -> click build number 7 times -> back -> System -> Developer options -> USB debugging enbale.
+   Power down opi5+. Power up opi5+.
+
+   Connect usb cable from PC to orangepi 5 plus ( USB C port )
+   On PC type:
+   adb devices
+   adb root
+   adb shell
+   du -h /system
+   mount -o rw,remount /
+   exit
+
+   To install apks:
+   for pkg in drawing drawshape kaleidoscope myanalogclock randomsong; do adb push "$pkg.apk" /sdcard/; done
+   adb shell
+   cd /system/priv-app
+   for pkg in drawing drawshape kaleidoscope myanalogclock randomsong; do ln -sf "/sdcard/$pkg.apk" .; done
+   exit
+   for pkg in drawing drawshape kaleidoscope myanalogclock randomsong; do adb install -r "$pkg.apk"; done
+   adb shell
+   mount -o ro,remount /
+   exit
+
+   To uninstall apks:
+   for pkg in drawing drawshape kaleidoscope myanalogclock randomsong; do adb uninstall "com.example.$pkg"; done

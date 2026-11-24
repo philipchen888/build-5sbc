@@ -12,7 +12,7 @@ Steps to build rpi4b, rpi5, opi5+, rockpi4b, roc-rk3328-cc sdcard image:
 
 1. git clone https://github.com/philipchen888/build-5sbc.git
    sudo dnf update
-   sudo dnf install debootstrap qemu-user-static gcc-aarch64-linux-gnu bison flex elfutils-libelf-devel openssl-devel tar chrpath diffstat rpcgen python3-setuptools swig python3-devel openssl-devel-engine gnutls-devel python3-pyelftools gcc-c++ cmake libfdt-devel git bc ncurses-devel gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu 
+   sudo dnf install debootstrap qemu-user-static gcc-aarch64-linux-gnu bison flex elfutils-libelf-devel openssl-devel tar chrpath diffstat rpcgen python3-setuptools swig python3-devel openssl-devel-engine gnutls-devel python3-pyelftools gcc-c++ cmake libfdt-devel git bc ncurses-devel gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu adb rkdeveloptool android-tools libusb1 libusb1-devel
 
    cd ~/Downloads
    wget https://github.com/pftf/RPi4/releases/download/v1.53/RPi4_UEFI_Firmware_v1.53.zip
@@ -55,3 +55,5 @@ Steps to build rpi4b, rpi5, opi5+, rockpi4b, roc-rk3328-cc sdcard image:
 8. cd ~/build-5sbc/yocto          ( Build yocto image )
 
 9. cd ~/build-5sbc/buildroot      ( Build buildroot image )
+
+10. cd ~/build-5sbc/android       ( Build android image )

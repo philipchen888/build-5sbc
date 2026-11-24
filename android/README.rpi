@@ -1,0 +1,93 @@
+Build android sdcard image for raspberrypi5/raspberrypi4b.
+
+   See https://raspberrytips.com/android-raspberry-pi-4/
+   Here are the required steps to install Android on Raspberry Pi:
+    
+    Download the AOSP17 version for Raspberry Pi from Konstakang.
+    Download Google Apps and save it on a USB memory stick.
+    Flash the custom image to an SD card and start the Raspberry Pi.
+    Reboot in recovery mode to install the Google Apps.
+
+   Download from https://konstakang.com/devices/rpi5/AOSP17
+   AOSP17-20261030-KonstaKANG-rpi5-ota.zip
+   AOSP17-20261030-KonstaKANG-rpi5.zip
+   unzip AOSP17-20261030-KonstaKANG-rpi5.zip
+
+   Download from https://konstakang.com/devices/rpi4/AOSP17
+   AOSP17-20261030-KonstaKANG-rpi4.zip
+   AOSP17-20261030-KonstaKANG-rpi4-ota.zip
+   unzip AOSP17-20261030-KonstaKANG-rpi4.zip
+
+   Download Google Play Store:
+   wget https://github.com/MindTheGapps/17.0.0-arm64/releases/download/MindTheGapps-17.0.0-arm64-20261022_132445/MindTheGapps-17.0.0-arm64-20261022_132445.zip
+
+   Plugin usb3 stick to PC.
+   sudo umount /dev/sda*
+   (rpi5)  sudo dd if=~/Downloads/AOSP17-20261030-KonstaKANG-rpi5.img of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
+   (rpi4b) sudo dd if=~/Downloads/AOSP17-20261030-KonstaKANG-rpi4.img of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
+   sudo mount /dev/sda1 /mnt
+   sudo vi /mnt/config.txt ( change from dtoverlay=android-sdcard to dtoverlay=android-usb, change to usb_max_current_enable=1 )  
+   sync; sudo umount /mnt;
+   Eject usb3 stick, plugin usb3 stick to rpi5/rpi4b.
+   After setting up wifi and Timezone, turn on developer mode.
+   Settings -> About tablet -> click build number 7 times
+   Settings -> System -> Raspberry Pi settings -> ADB ( turn on ) 
+
+   sudo dnf install adb
+   cd ~/build-5sbc/android
+   adb connect 192.168.86.20
+   adb root
+   adb shell
+   du -h /system
+   mount -o rw,remount /
+   exit
+
+   (rpi5)  adb push ~/Downloads/AOSP17-20261030-KonstaKANG-rpi5-ota.zip /sdcard
+   (rpi4b) adb push ~/Downloads/AOSP17-20261030-KonstaKANG-rpi4-ota.zip /sdcard
+   adb push ~/Downloads/MindTheGapps-17.0.0-arm64-20261022_132445.zip /sdcard
+
+   Boot to TWRP recovery: Settings -> System -> Raspberry Pi settings -> Reboot to recovery -> F5 ( shutdown ) -> power on.
+   (rpi5)  Install update -> Choose from internal storage -> AOSP17-20261030-KonstaKANG-rpi5-ota.zip -> Enter ->  Install update -> Choose from internal storage -> MindTheGapps-17.0.0-arm64-20261022_132445.zip -> Enter -> Reboot system
+   (rpi4b) Install update -> Choose from internal storage -> AOSP17-20261030-KonstaKANG-rpi4-ota.zip -> Enter ->  Install update -> Choose from internal storage -> MindTheGapps-17.0.0-arm64-20261022_132445.zip -> Enter -> Reboot system
+
+   Enable sound: Settings -> System -> Raspberry Pi settings -> Audio device (HDMI0).
+
+   Open Google Play Store -> sign in. Install YouTube, Solitaire etc.
+
+cd ~/build-5sbc/android
+adb connect 192.168.86.20
+adb root
+adb shell
+du -h /system
+mount -o rw,remount /
+exit
+
+To install apks:
+adb push drawing.apk /sdcard
+adb push drawshape.apk /sdcard
+adb push kaleidoscope.apk /sdcard
+adb push myanalogclock.apk /sdcard
+adb push randomsong.apk /sdcard
+adb shell
+cd /system/priv-app
+ln -s /sdcard/drawing.apk .
+ln -s /sdcard/drawshape.apk .
+ln -s /sdcard/kaleidoscope.apk .
+ln -s /sdcard/myanalogclock.apk .
+ln -s /sdcard/randomsong.apk .
+exit
+adb install -r drawing.apk
+adb install -r drawshape.apk
+adb install -r kaleidoscope.apk
+adb install -r myanalogclock.apk
+adb install -r randomsong.apk
+adb shell
+mount -o ro,remount /
+exit
+
+To uninstall apks:
+adb uninstall com.example.drawing
+adb uninstall com.example.drawshape
+adb uninstall com.example.kaleidoscope
+adb uninstall com.example.myanalogclock
+adb uninstall com.example.randomsong

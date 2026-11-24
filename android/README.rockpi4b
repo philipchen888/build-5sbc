@@ -1,0 +1,54 @@
+Build android sdcard image for Radxa rockpi4b.
+
+   See ../uboot/README to erase SPI flash or place a jumper across GPIO Pin 23 (SPI1_CLK) and Pin 25 (GND).
+   cd ~/Downloads
+   Download from https://wiki.radxa.com/Rockpi4/downloads
+   android: select rock4b Android 11
+   wget https://github.com/radxa/manifests/releases/download/Rock-android11-20211115_1851/rockpi-4ab-android11-20211115_1851-gpt.zip
+   unzip rockpi-4ab-android11-20211115_1851-gpt.zip
+
+   Plugin sdcard to PC.  
+   sudo umount /dev/sda*
+   sudo dd if=~/Downloads/Rock-PI-4AB-android11-20211115_1851-gpt.img of=/dev/sda bs=4096 conv=notrunc,fsync status=progress
+
+cd ~/build-5sbc/android
+sudo \rm -rf mnt_vendor super.img super_unpacked
+sudo dd if=/dev/sda13 of=super.img bs=4M status=progress
+mkdir super_unpacked
+lpunpack super.img super_unpacked/
+mkdir mnt_vendor
+sudo mount -o loop,rw super_unpacked/vendor.img mnt_vendor/
+echo "service.adb.tcp.port=5555" | sudo tee -a mnt_vendor/build.prop
+sync; sudo umount mnt_vendor/
+Eject sdcard from PC.
+
+Plugin sdcard to Radxa rockpi4b.
+After setting up android, turn on developer mode.
+Settings -> About phone -> hit build number 7 times -> back
+System -> Advanced -> Developer options -> Open USB debug and wireless debug.
+Open google play -> install shutdown
+Power -> shutdown
+
+Power on rockpi4b, turn on wireless debug, click on wireless debug and find IP address & port.
+adb connect 192.168.86.20:34031
+adb devices
+adb root
+adb shell
+du -h /system
+mount -o rw,remount /
+exit
+
+To install apks:
+for pkg in helloworld happybirthday diceroller drawing drawshape kaleidoscope myanalogclock randomsong; do adb push "$pkg.apk" /sdcard/; done
+adb shell
+cd /system/priv-app
+for pkg in helloworld happybirthday diceroller drawing drawshape kaleidoscope myanalogclock randomsong; do ln -sf "/sdcard/$pkg.apk" .; done
+exit
+for apk in helloworld.apk happybirthday.apk diceroller.apk drawing.apk drawshape.apk kaleidoscope.apk myanalogclock.apk randomsong.apk; do adb install -r "$apk"; done
+adb root
+adb shell
+mount -o ro,remount /
+exit
+
+To uninstall apks:
+for pkg in helloworld happybirthday diceroller drawing drawshape kaleidoscope myanalogclock randomsong; do adb uninstall "com.example.$pkg"; done
