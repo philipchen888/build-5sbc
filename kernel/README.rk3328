@@ -1,6 +1,6 @@
 compile mainline kernel for roc-rk3328-cc:
 
-git clone --depth=1 --branch v6.19 https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+git clone --depth=1 --branch v7.2 https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 mv linux linux-rk3328
 
 vi linux-rk3328/arch/arm64/boot/dts/rockchip/rk3328-roc.dtsi ( change to:

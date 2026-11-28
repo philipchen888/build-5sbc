@@ -1,25 +1,27 @@
 Build uboot image for orangepi 5 plus.
 
-sudo apt install git gcc g++ build-essential gcc-aarch64-linux-gnu iasl python3-pyelftools uuid-dev
+sudo dnf install git gcc gcc-c++ make automake autoconf libtool acpica-tools dtc nasm python3 python3-pip libuuid-devel openssl-devel gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
 git clone https://github.com/edk2-porting/edk2-rk3588.git --recursive
 cd edk2-rk3588
+./build.sh --device orangepi-5plus --release Release
 shorten name in line 70 of arm-trusted-firmware/plat/rockchip/rk3588/boards/rk3588_reference_pmic/scmi/rk3588_voltd.c  ( change "scmi_vccio_sd_s0" to "scmi_vccio_sd" )
-vi line 78 of edk2/BaseTools/Source/C/EfiRom/EfiRom.c
-change to if ((Ptr0 = (CHAR8 *) strstr ((CONST CHAR8 *) mOptions.FileList->FileName, DEFAULT_OUTPUT_EXTENSION)) != NULL) {
 vi line 24 of edk2-rockchip/Silicon/Rockchip/Include/Library/uboot-env.h
-vi line 13 of edk2-rockchip/Silicon/Rockchip/RK3588/Drivers/UsbDpPhyDxe/uboot-env.h
+vi line 15 of edk2-rockchip/Silicon/Rockchip/RK3588/Drivers/UsbDpPhyDxe/uboot-env.h
 change to 
 //typedef BOOLEAN bool;
 ./build.sh --device orangepi-5plus --release Release
 
 The result is in ./RK3588_NOR_FLASH.img
 
-Download Orangepi5plus_1.2.0_debian_bookworm_desktop_xfce_linux6.1.43.7z from http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-5-plus-32GB.html
-7z x Orangepi5plus_1.2.0_debian_bookworm_desktop_xfce_linux6.1.43.7z
-Burn debian bookworm desktop image to sdcard.
+Download Orangepi5plus_1.2.2_debian_bookworm_desktop_xfce_linux6.1.99.7z from http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-5-plus-32GB.html
+7z x Orangepi5plus_1.2.2_debian_bookworm_desktop_xfce_linux6.1.99.7z
+Burn debian trixie desktop image to sdcard.
 Plugin sdcard to PC.
-sudo dd if=~/Downloads/Orangepi5plus_1.2.0_debian_bookworm_desktop_xfce_linux6.1.43.img of=/dev/sda bs=4096 conv=notrunc,fsync 
-sudo mount /dev/sda2 /mnt
+sudo umount /dev/sda*
+sudo dd if=~/Downloads/Orangepi5plus_1.2.2_debian_bookworm_desktop_xfce_linux6.1.99.img of=/dev/sda bs=4096 conv=notrunc,fsync status=progress 
+sudo partprobe /dev/sda
+sudo mount /dev/sda1 /mnt
 cp ./RK3588_NOR_FLASH.img /mnt/home/orangepi
 sync; sudo umount /mnt
 Eject sdcard from PC.
@@ -62,7 +64,7 @@ The resulta are in ./out/idbloader.img
 
 Recover spi flash when bricked:
 
-1. On ubuntu PC sudo apt install rkdeveloptool
+1. On fedora PC sudo dnf install rkdeveloptool
 2. Download MiniLoaderAll.bin from https://drive.google.com/drive/folders/19SMZHj1Y8l_Vvr6_SMDHYdJHi41hMgsI
 
 3. On orangepi5+ Press and hold the MASKROM button, then plug in USB power and release the MASKROM button
@@ -73,4 +75,15 @@ Recover spi flash when bricked:
 8. sudo rkdeveloptool td                     ( TestDevice )
 9. sudo rkdeveloptool rd                     ( ResetDevice )
 10. Power off orangepi5+
+
+To flash RK3588_NOR_FLASH.img to spi flash:
+wget https://dl.radxa.com/rock5/sw/images/loader/rock-5b/release/rk3588_spl_loader_v1.15.113.bin
+1. sudo rkdeveloptool ld
+2. sudo rkdeveloptool db rk3588_spl_loader_v1.15.113.bin
+2. sudo rkdeveloptool ef                     ( Erase )
+3. sudo rkdeveloptool wl 0 RK3588_NOR_FLASH.img
+4. sudo rkdeveloptool rd                     ( ResetDevice )
+5. Power off orangepi5+
 ----------------------------------------------------------------------
+
+

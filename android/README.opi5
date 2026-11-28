@@ -52,3 +52,5 @@ Build android NVMe SSD for orangepi 5 plus.
 
    To uninstall apks:
    for pkg in drawing drawshape kaleidoscope myanalogclock randomsong; do adb uninstall "com.example.$pkg"; done
+
+   If you no longer need android and want to go to debain, ubuntu, fedora, follow ../uboot/README.opi5 to program spi for NVMe boot. Also remember to remove NVMe SSD from orangepi 5 plus.

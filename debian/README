@@ -5,9 +5,9 @@ Input files: ../kernel/linux-${CHIP}/tmp/boot/*
 
 cd ~/build-5sbc/debian
 make clean
-make SUITE=bookworm rootfs_base
-make SUITE=bookworm CHIP=rockpi4b finalize
-DISTRIBUTION=bookworm CHIP=rockpi4b ./mk-espimage.sh 
+make SUITE=trixie rootfs_base
+make SUITE=trixie CHIP=rk3328 finalize
+DISTRIBUTION=trixie CHIP=rk3328 ./mk-espimage.sh 
 ./mk-image.sh
 
 Plugin NVMe SSD/usb3 stick to PC.
@@ -56,13 +56,13 @@ git clone https://github.com/yt-dlp/yt-dlp.git
 cd yt-dlp
 make
 cd ../
-(rk3328) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4 --postprocessor-args " -r 10 -b:v 2M -c:a copy"
+(rk3328) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o "temp_%(id)s.%(ext)s" --exec "ffmpeg -y -i {} -vf scale=1024:640 -r 10 -b:v 2M -c:a copy swan.mp4 && rm {}"
 (opi5,rpi5,rockpi4b,rpi4b) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4
 )
 
 mpv swan.mp4
 ffplay -autoexit swan.mp4
-cvlc -gl=wgl --glconv=any swan.mp4
+cvlc --gl=wgl --glconv=any swan.mp4
 
 Except rockpi4b, Plugin ASUS USB-BT500 bluetooth usb dongle to sbc.
 hciconfig hci0

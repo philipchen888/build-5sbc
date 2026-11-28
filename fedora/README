@@ -45,7 +45,8 @@ git clone https://github.com/yt-dlp/yt-dlp.git
 cd yt-dlp
 make
 cd ../
-~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4
+(rk3328) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o "temp_%(id)s.%(ext)s" --exec "ffmpeg -y -i {} -vf scale=1024:640 -r 10 -b:v 2M -c:a copy swan.mp4 && rm {}"
+(opi5,rpi5,rockpi4b,rpi4b) ~/yt-dlp/yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]' 3qrKjywjo7Q -o swan.mp4
 )
 
 mpv swan.mp4
